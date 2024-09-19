@@ -1,43 +1,39 @@
-# Tên của GitHub Action
-name: Generate Snake
+name: generate animation
 
-# Điều khiển khi nào action sẽ chạy. Ở đây đặt để chạy mỗi 6 giờ.
 on:
+  # chạy tự động mỗi 24 giờ
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "0 */24 * * *" 
+  
+  # cho phép chạy công việc thủ công bất kỳ lúc nào
   workflow_dispatch:
+  
+  # chạy mỗi khi có push trên nhánh master
+  push:
+    branches:
+    - master
 
-# Các công việc sẽ được thực hiện
 jobs:
-  build:
-    # Chọn môi trường chạy
+  generate:
+    permissions: 
+      contents: write
     runs-on: ubuntu-latest
-
+    timeout-minutes: 5
+    
     steps:
-      # Bước kiểm tra repo để truy cập các file
-      - uses: actions/checkout@v2
-
-      # Tạo hình ảnh con rắn
-      - uses: Platane/snk@master
-        id: snake-gif
+      # tạo game con rắn từ biểu đồ đóng góp của người dùng GitHub (<github_user_name>), đầu ra là một ảnh svg động tại <svg_out_path>
+      - name: generate github-contribution-grid-snake.svg
+        uses: Platane/snk/svg-only@v3
         with:
-          github_user_name: trunglienquy  # Thay <YOUR_GITHUB_USERNAME> bằng tên GitHub của bạn
-          gif_out_path: dist/github-contribution-grid-snake.gif
-          svg_out_path: dist/github-contribution-grid-snake.svg
-
-      # Kiểm tra trạng thái của git
-      - run: git status
-
-      # Đẩy thay đổi lên GitHub
-      - name: Push changes
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: master
-          force: true
-
-      # Đưa ảnh snake lên GitHub Pages
-      - uses: crazy-max/ghaction-github-pages@v2.1.3
+          github_user_name: trunglienquy  # Thay đổi thành tên GitHub của bạn
+          outputs: |
+            dist/github-contribution-grid-snake.svg
+            dist/github-contribution-grid-snake-dark.svg?palette=github-dark
+          
+      # đẩy nội dung của <build_dir> lên nhánh output
+      # nội dung sẽ có sẵn tại https://raw.githubusercontent.com/<github_user>/<repository>/<target_branch>/<file>, hoặc như một trang GitHub
+      - name: push github-contribution-grid-snake.svg to the output branch
+        uses: crazy-max/ghaction-github-pages@v3.1.0
         with:
           target_branch: output
           build_dir: dist
